@@ -17,20 +17,22 @@ Alternatively, using pip:
 pip install uv
 ```
 
-### 2. Initialize Project
+### 2. Setup Environment
 ```bash
-mkdir dominion-meta-sim
-cd dominion-meta-sim
+uv sync
+```
+This will:
+- create a virtual environment (.venv)
+- install all dependencies from uv.lock
 
-uv init
+### 3. Activate Environment
+```bash
+source .venv/bin/activate  # macOS / Linux
 ```
 
-This will generate a pyproject.toml file.
-
-### 3. Create and Activate Virtual Environment
+### 4. Run
 ```bash
-uv venv
-source .venv/bin/activate  # macOS / Linux
+uv run python main.py
 ```
 
 ---

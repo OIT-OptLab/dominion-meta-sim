@@ -1,0 +1,19 @@
+[project]
+name = "dominion-meta-sim"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib>=3.10.8",
+    "numpy>=2.2.6",
+    "pyminion>=0.4.0",
+    "scikit-learn>=1.7.2",
+    "scipy>=1.15.3",
+]
+
+[tool.uv]
+package = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
