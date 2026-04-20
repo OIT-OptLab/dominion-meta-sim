@@ -1,38 +1,118 @@
 # dominion-meta-sim
 
-AI-based simulation framework for analyzing and optimizing game balance through evolving meta dynamics in Dominion.
+ドミニオンを対象として，AI 同士の対戦シミュレーションを通じて  
+メタ環境の動的変化を分析し，ゲームバランスの評価・最適化を行うための研究用フレームワークです．
+
+本プロジェクトでは，パラメトリック戦略を持つエージェント群を用い，  
+対戦結果に基づく戦略分布の変化を観察することで，
+
+- 特定戦略への一極集中
+- メタ環境の硬直化
+- 戦略多様性の低下
+
+といった現象を定量的に扱うことを目指します．
 
 ---
 
-## Environment Setup (using uv)
-This project uses [uv](https://github.com/astral-sh/uv), a fast and reproducible Python package manager, to manage dependencies and virtual environments.
+## 概要
 
-### 1. Install uv
+本研究では，ドミニオンにおけるゲーム環境を固定したうえで，  
+複数の戦略エージェントを対戦させ，その適応度に基づいてメタ環境の変化を追跡します．
 
+現在の実装内容：
+
+- パラメトリック戦略エージェント  
+  カード特徴量に対する重みベクトルによって戦略を表現
+- Pyminion ベースの対戦実行  
+  ミニオンの対戦シミュレーションを実行
+- 適応度評価  
+  平均勝率に基づく戦略の経験的適応度を推定
+- MetaNetwork  
+  プレイヤーグループ間の対戦ネットワークと，各グループ内部の戦略分布を表現
+- 戦略分布更新  
+  各グループ内で戦略の採用率を更新
+
+---
+
+## 環境構築（uv を利用）
+
+本プロジェクトでは，Python の依存関係管理と仮想環境構築に  
+[uv](https://github.com/astral-sh/uv) を使用します．
+
+### 1. uv のインストール
 ```bash
 curl -Ls https://astral.sh/uv/install.sh | sh
 ```
-Alternatively, using pip:
+または pip を用いる場合：
 ```bash
 pip install uv
 ```
 
-### 2. Setup Environment
+### 2. 環境のセットアップ
 ```bash
 uv sync
 ```
-This will:
-- create a virtual environment (.venv)
-- install all dependencies from uv.lock
+このコマンドにより，仮想環境 .venv の作成
+uv.lock に基づく依存ライブラリのインストール
+が自動で行われます．
 
-### 3. Activate Environment
+### 3. 仮想環境の有効化
+macOS / Linux:
 ```bash
-source .venv/bin/activate  # macOS / Linux
+source .venv/bin/activate
 ```
 
-### 4. Run
+### 4. サンプルコードの実行
 ```bash
-uv run python main.py
+python src/dominion_meta_sim/run_fitness_demo.py
 ```
 
----
+## ディレクトリ構成
+```text
+dominion-meta-sim/
+├── README.md
+├── pyproject.toml
+├── uv.lock
+├── src/
+│   └── dominion_meta_sim/
+│       ├── agents/
+│       │   ├── bot_factory.py
+│       │   ├── parametric_bot.py
+│       │   └── strategy.py
+│       ├── evolution/
+│       │   ├── fitness.py
+│       │   └── meta_network.py
+│       ├── game/
+│       │   └── pyminion_adapter.py
+│       └── run_fitness_demo.py
+```
+## 実装の考え方
+各戦略は，カードの価値を評価するための重みベクトルとして表現します．  
+この重みベクトルは，カードが持ついくつかの特徴量（例えば金量やカード種別など）に対してどの程度の重要性を与えるかを表しています．  
+各カードはあらかじめ定義された特徴量ベクトルとして表現され，戦略はそれに基づいてカードごとの評価値を計算します．  
+購入フェーズでは，この評価値が最も高いカードを優先的に選択することで，戦略に応じた意思決定を行う．
+
+現在の特徴量は簡易的に，
+- bias
+- money
+- is_action
+- is_treasure
+- is_victory
+
+を用いています．
+
+
+戦略の対戦ネットワークは MetaNetwork により表現します．  
+このネットワークにおける各ノードは，個々のプレイヤーではなく，類似した対戦環境やプレイ傾向を共有するプレイヤーグループです．  
+各グループは内部に複数の戦略の採用率分布を持ち，そのグループに属するプレイヤーがどの戦略をどの程度使用しているかを表現します．  
+また，ノード間の接続はグループ同士の遭遇しやすさを表しており，どのグループのプレイヤーと対戦する機会が多いかという対戦構造を記述します．
+
+各ノードを個々のプレイヤーではなくプレイヤーグループとして定義しているのは:
+- 現実の対戦環境の全プレイヤーを個別にモデル化することが計算的に困難であること
+- ランク帯やコミュニティといった単位で類似した戦略分布が形成される傾向を再現するため
+
+各ノードにおける適応度は，ノード全体に対してではなく，ノード内に存在する各戦略ごとに定義します．  
+各ノードにおける適応度は，ノード内の各戦略について，対戦ネットワークに基づいて選択された対戦相手グループと，
+そのグループ内の戦略分布に従ってサンプリングされた戦略との対戦を複数回行い，その平均勝率です．
+
+
